@@ -15,11 +15,12 @@ logger = logging.getLogger(__name__)
 
 
 # Create your views here.
-
+def static_page(request):
+    return render(request, 'djangoapp/static_page.html')
 
 # Create an `about` view to render a static about page
-# def about(request):
-# ...
+def about_page(request):
+    return render(request, 'djangoapp/about.html')
 
 
 # Create a `contact` view to return a static contact page
