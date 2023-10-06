@@ -22,6 +22,11 @@ urlpatterns = [
 
     # path for logout
 
+    path('login/', views.login_request, name='login'),
+    path('logout/', views.logout_request, name='logout'),
+    path('signup/', views.registration_request, name='signup'),
+    path('signup/', views.signup_view, name='signup'),
+
     path(route='', view=views.get_dealerships, name='index'),
 
     # path for dealer reviews view
