@@ -3,7 +3,12 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render, redirect
 # from .models import related models
+from .models import DealerReview
 # from .restapis import related methods
+from .restapis import get_dealers_from_cf
+from .restapis import get_dealer_reviews_from_cf
+from .restapis import post_request
+
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
@@ -71,9 +76,14 @@ def registration_request(request):
 
 # Update the `get_dealerships` view to render the index page with a list of dealerships
 def get_dealerships(request):
-    context = {}
     if request.method == "GET":
-        return render(request, 'djangoapp/index.html', context)
+        url = 'https://us-south.functions.appdomain.cloud/api/v1/web/97ac4e72-d24d-42cf-a85d-abc24849c4ca/dealership-package/get-dealership'
+        # Get dealers from the URL
+        dealerships = get_dealers_from_cf(url)
+        # Concat all dealer's short name
+        dealer_names = ' '.join([dealer.short_name for dealer in dealerships])
+        # Return a list of dealer short name
+        return HttpResponse(dealer_names)
 
 def signup_view(request):
     if request.method == "POST":
@@ -91,8 +101,62 @@ def signup_view(request):
 # Create a `get_dealer_details` view to render the reviews of a dealer
 # def get_dealer_details(request, dealer_id):
 # ...
+def get_dealer_details(request, dealer_id, api_key):
+    dealer = get_dealer_by_id(dealer_id, api_key)
+    reviews = get_dealer_reviews_from_cf('https://us-south.functions.appdomain.cloud/api/v1/web/97ac4e72-d24d-42cf-a85d-abc24849c4ca/dealership-package/get-review', dealer_id, api_key)
+
+    # Iterate through the reviews and print sentiment
+    for review in reviews:
+        print(f"Review ID: {review.id}")
+        print(f"Sentiment: {review.sentiment}")
+        print(f"Reviewer Name: {review.name}")
+        print(f"Review Text: {review.review}")
+        print(f"Purchase: {review.purchase}")
+        print(f"Purchase Date: {review.purchase_date}")
+        print(f"Car Make: {review.car_make}")
+        print(f"Car Model: {review.car_model}")
+        print(f"Car Year: {review.car_year}")
+        print()
+
+    context = {
+        "dealer": dealer,
+        "reviews": reviews,
+    }
+    return render(request, "dealer_details.html", context)
 
 # Create a `add_review` view to submit a review
 # def add_review(request, dealer_id):
 # ...
+def add_review(request, dealer_id):
+    # Check if the user is authenticated
+    if not request.user.is_authenticated:
+        return HttpResponse("Unauthorized", status=401)
+
+    # Prepare review data
+    review = {
+        "time": datetime.utcnow().isoformat(),
+        "name": request.user.username,
+        "dealership": dealer_id,
+        "review": "This is a great car dealer",  # Replace with the actual review text
+        # Add other review attributes as needed
+    }
+
+    # Create JSON payload
+    json_payload = {
+        "review": review
+    }
+
+    # Define the URL for the review-post cloud function
+    POST_API_URL = "https://us-south.functions.appdomain.cloud/api/v1/web/97ac4e72-d24d-42cf-a85d-abc24849c4ca/dealership-package/post-review"  # Replace with the actual URL
+
+    # Send POST request
+    response = post_request(POST_API_URL, json_payload, dealerId=dealer_id)
+
+    # Check the response and return appropriate result
+    if response and response.status_code == 200:
+        # Review was successfully added
+        return HttpResponse("Review added successfully", status=200)
+    else:
+        # There was an error adding the review
+        return HttpResponse("Failed to add review", status=500)
 
