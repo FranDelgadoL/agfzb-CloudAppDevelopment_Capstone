@@ -8,9 +8,49 @@
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.5.0/js/bootstrap-datepicker.js"></script>
-
 </head>
-    <body>
-    <!--Add review form here -->
-    </body>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <!-- Navbar content from index.html -->
+</nav>
+
+<div class="container mt-4">
+    <h1>Add Review for {{ dealer.full_name }}</h1>
+
+    <form method="post" action="{% url 'djangoapp:add_review' dealer.id %}">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="content" class="form-label">Review Content</label>
+            <textarea class="form-control" id="content" name="content" rows="4" required></textarea>
+        </div>
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="purchasecheck" name="purchasecheck">
+            <label class="form-check-label" for="purchasecheck">Did you purchase a car from this dealer?</label>
+        </div>
+        <div class="mb-3">
+            <label for="car" class="form-label">Select Car</label>
+            <select name="car" id="car" class="form-select" required>
+                {% for car in cars %}
+                    <option value="{{ car.id }}">{{ car.name }} - {{ car.make.name }} - {{ car.year|date:"Y" }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="purchasedate" class="form-label">Purchase Date</label>
+            <input class="date-own form-control" type="text" name="purchasedate" id="purchasedate" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+
+<script type="text/javascript">
+    $('.date-own').datepicker({
+        format: 'mm/dd/yyyy',
+        endDate: 'today',
+        autoclose: true
+    });
+</script>
+
+</body>
 </html>
